@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Humming Cob — Comparateur généalogique (prototype)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#f6efe4;
+    --rose:#c98a92;
+    --rose-deep:#a8636c;
+    --gold:#b8925a;
+    --ink:#3a322c;
+    --line:#e2d5c2;
+    --ok:#7a8f6f;
+    --warn:#c9975a;
+    --danger:#b45f5f;
+    --page-w:1400px;
+    /* couleurs de lignée (souche d'origine) */
+    --strain-sancler:#b3454f;
+    --strain-sd:#d4a94a;
+    --strain-cairnview:#8a9b5e;
+    --strain-autre:#d98a4a;
+    --strain-inconnue:#c7bca8;
+    /* couleurs par sexe, appliquées au texte des noms (pas au fond des cases,
+       réservé à la lignée) */
+    --sex-stallion:#3f6f96;
+    --sex-mare:#a8636c;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--cream);
+    color:var(--ink);
+    font-family:'Jost',sans-serif;
+    padding:32px 20px 60px;
+  }
+  h1{
+    font-family:'Cormorant Garamond',serif;
+    font-weight:700;
+    font-size:2.4rem;
+    margin:0 0 4px;
+    color:var(--rose-deep);
+    max-width:var(--page-w);
+    margin-left:auto;
+    margin-right:auto;
+  }
+  .subtitle{
+    color:#7a6f62;
+    margin:0 0 20px;
+    font-size:0.95rem;
+    max-width:var(--page-w);
+    margin-left:auto;
+    margin-right:auto;
+  }
+  .legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:16px;
+    align-items:center;
+    font-size:0.8rem;
+    color:#7a6f62;
+    max-width:var(--page-w);
+    margin:0 auto 24px;
+    padding:12px 18px;
+    background:#fffdf9;
+    border:1px solid var(--line);
+    border-radius:10px;
+  }
+  .legend-title{
+    font-family:'Cormorant Garamond',serif;
+    font-size:1rem;
+    color:var(--ink);
+    margin-right:4px;
+  }
+  .legend-item{display:flex;align-items:center;gap:6px;}
+  .page{max-width:var(--page-w);margin:0 auto;display:flex;flex-direction:column;gap:24px;}
+  .panel{
+    background:#fffdf9;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:20px 22px;
+  }
+  .panel h2{
+    font-family:'Cormorant Garamond',serif;
+    font-size:1.3rem;
+    margin:0 0 14px;
+    color:var(--ink);
+    border-bottom:1px solid var(--line);
+    padding-bottom:8px;
+  }
+  table{width:100%;border-collapse:collapse;font-size:0.85rem;}
+  th,td{text-align:left;padding:6px 6px;border-bottom:1px solid var(--line);}
+  th{color:#8a7d6d;font-weight:500;font-size:0.75rem;text-transform:uppercase;letter-spacing:.03em;}
+  .tag{
+    display:inline-block;
+    font-size:0.68rem;
+    padding:1px 7px;
+    border-radius:20px;
+    background:var(--rose);
+    color:#fff;
+  }
+  .tag.sex{background:var(--line);color:var(--ink);}
+  .name-stallion{color:var(--sex-stallion);font-weight:500;}
+  .name-mare{color:var(--sex-mare);font-weight:500;}
+  .tag.synth{background:#b9ab94;}
+  .tag.estim{background:var(--warn);}
+  .tag.hc{background:var(--rose-deep);margin-right:4px;}
+  label{display:block;font-size:0.78rem;color:#7a6f62;margin:10px 0 4px;}
+  input,select{
+    width:100%;
+    padding:8px 10px;
+    border:1px solid var(--line);
+    border-radius:6px;
+    background:#fff;
+    font-family:'Jost',sans-serif;
+    font-size:0.88rem;
+    color:var(--ink);
+  }
+  button{
+    font-family:'Jost',sans-serif;
+    font-weight:500;
+    border:none;
+    border-radius:6px;
+    padding:10px 16px;
+    cursor:pointer;
+    font-size:0.85rem;
+  }
+  .btn-primary{background:var(--rose-deep);color:#fff;margin-top:14px;}
+  .btn-primary:hover{background:var(--rose);}
+  .btn-secondary{background:transparent;border:1px solid var(--gold);color:var(--gold);}
+  .btn-secondary:hover{background:var(--gold);color:#fff;}
+  .row-actions{display:flex;gap:10px;margin-top:16px;}
+  .result{
+    margin-top:22px;
+    padding:16px;
+    border-radius:8px;
+    border:1px solid var(--line);
+    background:#fbf6ee;
+    max-width:520px;
+    margin-left:auto;
+    margin-right:auto;
+  }
+  .result .value{
+    font-family:'Cormorant Garamond',serif;
+    font-size:2.2rem;
+    font-weight:700;
+  }
+  .result .label{font-size:0.8rem;color:#7a6f62;margin-bottom:2px;}
+  .badge{
+    display:inline-block;
+    margin-top:8px;
+    padding:4px 12px;
+    border-radius:20px;
+    font-size:0.78rem;
+    color:#fff;
+  }
+  .hint{font-size:0.78rem;color:#8a7d6d;margin-top:10px;line-height:1.5;}
+  #fileInput{display:none;}
+  .small{font-size:0.72rem;color:#a99d8c;margin-top:16px;}
+
+  /* --- Chevaux enregistrés : replié par défaut --- */
+  .collapse-wrap{
+    background:#fffdf9;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:4px 22px;
+  }
+  .collapse-wrap summary{
+    cursor:pointer;
+    padding:14px 0;
+    font-family:'Cormorant Garamond',serif;
+    font-size:1.15rem;
+    color:var(--ink);
+    list-style:none;
+  }
+  .collapse-wrap summary::-webkit-details-marker{display:none;}
+  .collapse-wrap summary::before{content:'▸ ';color:var(--gold);}
+  .collapse-wrap[open] summary::before{content:'▾ ';}
+  .collapse-wrap[open] summary{border-bottom:1px solid var(--line);}
+  .collapse-wrap table{margin:14px 0 10px;}
+
+  /* --- Séparation visuelle : chevaux ajoutés via l'outil vs base de référence --- */
+  .section-divider td{padding:14px 6px 6px;border-bottom:none;}
+  .divider-line{
+    display:flex;align-items:center;gap:10px;
+    font-size:0.68rem;text-transform:uppercase;letter-spacing:.04em;color:#a99d8c;
+  }
+  .divider-line::before,.divider-line::after{content:'';flex:1;height:1px;background:var(--line);}
+
+  /* --- Note explicative repliable (méthode de calcul) --- */
+  .calc-info{margin-top:14px;}
+  .calc-info summary{cursor:pointer;font-size:0.8rem;color:var(--gold);list-style:none;}
+  .calc-info summary::-webkit-details-marker{display:none;}
+  .calc-info summary::before{content:'▸ ';}
+  .calc-info[open] summary::before{content:'▾ ';}
+
+  /* --- Encart fiabilité (toujours visible, non replié) --- */
+  .reliability-note{
+    display:flex;gap:10px;align-items:flex-start;
+    margin:14px 0 18px;padding:12px 16px;
+    border:1px solid var(--warn);border-radius:10px;
+    background:color-mix(in srgb, var(--warn) 14%, #fffdf9);
+    font-size:0.85rem;line-height:1.45;color:var(--ink);
+    text-align:left;
+  }
+  .reliability-note .icon{font-size:1.1rem;line-height:1.3;flex-shrink:0;}
+
+  /* --- Pastilles de lignée --- */
+  .swatch{
+    display:inline-block;
+    border-radius:50%;
+    vertical-align:middle;
+    border:1px solid rgba(0,0,0,0.15);
+    flex:none;
+  }
+  .strain-picker{display:flex;gap:6px;margin:2px 0 8px;}
+  .swatch-btn{
+    width:18px;height:18px;
+    border-radius:50%;
+    border:2px solid transparent;
+    cursor:pointer;
+    padding:0;
+  }
+  .swatch-btn.active{border-color:var(--ink);}
+  .strain-caption{font-size:0.68rem;color:#a99d8c;margin:6px 0 2px;}
+
+  /* --- Recherche d'un cheval existant (autocomplete) --- */
+  .combo{position:relative;margin-bottom:4px;}
+  .combo-input{margin-bottom:0;}
+  .combo-list{
+    position:absolute; z-index:20; top:100%; left:0; right:0;
+    background:#fff; border:1px solid var(--line); border-top:none;
+    border-radius:0 0 6px 6px; max-height:220px; overflow-y:auto;
+    display:none; box-shadow:0 6px 14px rgba(0,0,0,0.12);
+  }
+  .combo-group{font-size:0.62rem;text-transform:uppercase;letter-spacing:.03em;color:#a99d8c;padding:5px 8px 2px;background:#faf6ee;}
+  .combo-item{display:flex;align-items:center;gap:6px;padding:6px 8px;font-size:0.8rem;cursor:pointer;}
+  .combo-item:hover{background:#f2ede1;}
+  .combo-empty{padding:8px;font-size:0.76rem;color:#a99d8c;}
+  .slot-pill{
+    display:flex;align-items:center;gap:6px;
+    padding:6px 8px;border:1px solid var(--line);border-radius:6px;
+    background:#fff;font-size:0.82rem;margin-bottom:6px;
+  }
+  .slot-pill .pill-name{flex:1;}
+  .slot-pill .pill-clear, .new-clear{cursor:pointer;color:#a99d8c;font-weight:600;padding:0 4px;}
+  .slot-pill .pill-clear:hover, .new-clear:hover{color:var(--danger);}
+  .link-btn{background:transparent;border:none;color:var(--gold);font-size:0.72rem;padding:2px 0;cursor:pointer;text-decoration:underline;display:block;width:100%;white-space:normal;text-align:left;}
+  .new-caption{display:flex;justify-content:space-between;align-items:center;font-size:0.72rem;color:#a99d8c;margin-bottom:2px;}
+  .owned-toggle{display:flex;align-items:center;gap:6px;font-size:0.76rem;color:#7a6f62;margin:10px 0 4px;}
+  .owned-toggle input{width:auto;margin:0;}
+
+  /* --- Arbre généalogique de saisie --- */
+  .tree-wrap{overflow-x:auto;padding:6px 2px 14px;}
+  .tree{display:flex;align-items:center;width:max-content;}
+  .branch{display:flex;align-items:center;}
+  .root-wrap{display:flex;flex-direction:column;align-items:stretch;}
+  .root-strain-outside{margin-top:8px;padding:0 1px;}
+  .children-wrap{
+    display:flex;
+    flex-direction:column;
+    justify-content:space-around;
+    gap:12px;
+    margin-inline-start:14px;
+    padding-inline-start:14px;
+    border-inline-start:2px solid var(--line);
+  }
+  /* --- Case A : arbre en effet miroir (pousse vers la gauche) ---
+     `direction:rtl` sur le conteneur inverse l'ordre visuel des enfants flex
+     (racine à droite, ascendants à gauche) à chaque niveau de récursion, sans
+     toucher au HTML/JS. `margin/padding/border-inline-start` ci-dessus suivent
+     automatiquement. On repasse en `ltr` à l'intérieur de chaque carte pour que
+     le texte, les champs et les pastilles restent lisibles normalement. */
+  .tree.mirrored{direction:rtl;}
+  .tree.mirrored .node-card, .tree.mirrored .root-strain-outside{direction:ltr;}
+  .node-card{
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:10px 12px;
+    background:#fffdf9;
+    width:180px;
+  }
+  .node-card.root-card{
+    background:#fbf6ee;
+    border-color:var(--gold);
+    width:170px;
+    padding:8px 10px;
+  }
+  .node-card.existing{
+    background:#f2ede1;
+    border-style:dashed;
+  }
+  .node-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:6px;
+    font-size:0.78rem;
+    color:#7a6f62;
+  }
+  .node-head .left{display:flex;align-items:center;gap:6px;}
+  .gen-badge{
+    font-size:0.62rem;
+    color:#8a7d6d;
+    background:var(--line);
+    border-radius:10px;
+    padding:1px 7px;
+  }
+  .node-card select, .node-card input{
+    padding:6px 8px;
+    font-size:0.8rem;
+    margin-bottom:6px;
+  }
+  .node-card select:disabled, .node-card input:disabled{
+    background:#f2ede1;
+    color:#8a7d6d;
+    cursor:not-allowed;
+  }
+  .node-info{font-size:0.72rem;color:#7a6f62;margin-top:2px;line-height:1.4;}
+  .expand-btn{
+    margin-top:4px;
+    background:transparent;
+    border:1px dashed var(--gold);
+    color:var(--gold);
+    font-size:0.7rem;
+    padding:4px 8px;
+    border-radius:5px;
+    cursor:pointer;
+  }
+  .expand-btn:hover{background:var(--gold);color:#fff;}
+
+  /* --- Page d'accueil : case HC × case à tester --- */
+  .match-panel{text-align:center;}
+  .match-panel h2{border-bottom:none;text-align:left;}
+  .match-row{
+    display:flex;align-items:center;justify-content:center;
+    gap:28px;flex-wrap:wrap;padding:14px 0 4px;
+  }
+  .match-box{
+    width:340px;min-height:150px;
+    border:2px solid var(--line);border-radius:12px;
+    background:#fffdf9;padding:18px;
+    display:flex;flex-direction:column;
+    text-align:left;
+  }
+  .match-box-label{
+    font-family:'Cormorant Garamond',serif;
+    font-size:1.05rem;color:var(--rose-deep);margin-bottom:10px;
+  }
+  .match-box-click{
+    cursor:pointer;justify-content:center;align-items:center;text-align:center;
+    transition:border-color .15s, background .15s;
+  }
+  .match-box-click:hover{border-color:var(--gold);background:#fbf6ee;}
+  .match-box-placeholder{color:#a99d8c;font-size:0.85rem;}
+  .match-box-filled{display:flex;flex-direction:column;align-items:center;gap:8px;}
+  .match-box-filled .name{font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--ink);}
+  .match-box-change{font-size:0.72rem;color:var(--gold);text-decoration:underline;cursor:pointer;background:none;border:none;padding:0;}
+  .match-x{font-family:'Cormorant Garamond',serif;font-size:2.6rem;color:var(--gold);font-weight:700;}
+  .match-box select{margin-bottom:0;}
+
+  /* --- Mobile : empiler case HC / × / case à tester, une par ligne --- */
+  @media (max-width:680px){
+    .match-row{flex-direction:column;align-items:center;}
+    .match-box{width:100%;max-width:340px;}
+  }
+
+  /* --- Modale --- */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(58,50,44,0.55);
+    display:none;align-items:flex-start;justify-content:center;
+    padding:40px 20px;z-index:100;overflow-y:auto;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal-panel{
+    background:#fffdf9;border-radius:14px;max-width:1300px;width:100%;
+    padding:26px 30px 30px;box-shadow:0 20px 50px rgba(0,0,0,0.25);
+  }
+  .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+  .modal-head h2{margin:0;font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--rose-deep);}
+  .modal-close{background:transparent;border:none;font-size:1.7rem;line-height:1;color:#a99d8c;cursor:pointer;padding:2px 8px;}
+  .modal-close:hover{color:var(--danger);}
+  .modal-actions{display:flex;gap:10px;align-items:center;margin-top:14px;}
+  .modal-actions .btn-primary, .modal-actions .btn-secondary{margin-top:0;}
+</style>
+</head>
+<body>
+
+<p style="max-width:var(--page-w);margin:0 auto 2px;font-size:0.78rem;"><a href="index.html" style="color:var(--gold);">← Retour à l'outil principal</a></p>
+<h1>Comparateur généalogique — Humming Cob</h1>
+<p class="subtitle">Comparez deux chevaux quelconques de la base (Cheval A × Cheval B) : l'outil calcule le coefficient de consanguinité estimé de leur descendance hypothétique (méthode tabulaire de Wright, la méthode de référence utilisée par l'IFCE). Outil encore en développement — merci de lire le point sur la fiabilité ci-dessous avant d'interpréter un résultat.</p>
+
+<div class="legend" id="legend"></div>
+
+<div class="page">
+
+  <details class="collapse-wrap" id="horseListDetails">
+    <summary>Chevaux enregistrés (<span id="horseCount">0</span>)</summary>
+    <p class="hint" style="margin:0 0 12px;"><button type="button" class="link-btn" onclick="openModal('catalog')">+ Ajouter un cheval</button></p>
+    <table>
+      <thead><tr><th>Nom</th><th>Sexe</th><th>Père</th><th>Mère</th><th>Lignée</th><th>Origine</th></tr></thead>
+      <tbody id="horseTable"></tbody>
+    </table>
+  </details>
+
+  <div class="panel match-panel">
+    <h2>Tester une compatibilité</h2>
+
+    <div class="reliability-note">
+      <span class="icon">⚠️</span>
+      <span><strong>Avant d'interpréter un résultat :</strong> ce chiffre ne prend en compte que les ancêtres renseignés dans l'outil. Un pedigree incomplet peut masquer une consanguinité réelle plus élevée que celle affichée — considérez ce résultat comme une estimation minimale, pas une garantie.</span>
+    </div>
+
+    <div class="match-row">
+      <div class="match-box match-box-click" id="leftBox" onclick="openModal('left')">
+        <div class="match-box-label">Cheval A</div>
+        <div id="leftBoxContent" class="match-box-placeholder">Cliquez pour choisir ou ajouter un cheval</div>
+      </div>
+      <div class="match-x">×</div>
+      <div class="match-box match-box-click" id="rightBox" onclick="openModal('right')">
+        <div class="match-box-label">Cheval B</div>
+        <div id="rightBoxContent" class="match-box-placeholder">Cliquez pour choisir ou ajouter un cheval</div>
+      </div>
+    </div>
+
+    <details class="calc-info">
+      <summary>ℹ️ Comment est calculé ce pourcentage ?</summary>
+      <p class="hint" style="margin:8px 0 0;">L'outil regarde les ancêtres connus des deux chevaux (jusqu'à 3 générations, plus si vous les avez complétées) et repère ceux qu'ils ont en commun. Plus un ancêtre commun est proche dans le pedigree, plus il compte dans le résultat. Ce calcul suit la méthode de référence utilisée par l'IFCE (méthode tabulaire de Wright).</p>
+      <p class="hint"><strong>Quelques repères IFCE :</strong> la consanguinité moyenne des chevaux Selle Français est d'environ 1,25 %, et sur l'ensemble des chevaux enregistrés au SIRE elle varie globalement de 0 à environ 48 % (moyenne 0,8 %). L'IFCE indique qu'au-delà de 6 %, la consanguinité « peut devenir gênante » pour l'individu concerné — c'est le seul seuil chiffré officiellement publié que nous ayons trouvé. Il n'existe pas de seuil « interdit » réglementaire en élevage équin français : la décision reste à l'appréciation de l'éleveur, avec avis vétérinaire si besoin.</p>
+      <p class="hint">Les niveaux affichés avec le résultat (Faible / Modéré / Élevé / Très élevé) sont des repères indicatifs de génétique des populations — <strong>pas une classification officielle de l'IFCE</strong> — correspondant aux degrés de parenté usuels : Modéré ≈ équivalent cousins germains (6,25 %), Très élevé ≈ équivalent demi-frères/sœurs ou plus proche (12,5 % et au-delà). Le seuil « Élevé » de l'outil (6,25 %) est très proche du seuil de vigilance publié par l'IFCE (6 %).</p>
+      <p class="hint" style="font-size:0.68rem;color:#a99d8c;">Source : dépliant « Génétique », IFCE / Haras nationaux.</p>
+    </details>
+
+    <div class="result" id="resultBox" style="display:none;">
+      <div class="label">Coefficient de consanguinité estimé de la descendance</div>
+      <div class="value" id="resultValue">—</div>
+      <div id="resultBadge"></div>
+      <div class="hint" id="resultHint"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Sauvegarder mes chevaux</h2>
+    <p class="hint" style="margin-top:0;"><strong>Comment ajouter un cheval :</strong> cliquez sur la case « Cheval A » ou « Cheval B » (ou sur « + Ajouter un cheval » dans le tableau ci-dessus), renseignez son pedigree, puis cliquez sur « Sauvegarder mon cheval ».</p>
+    <p class="hint"><strong>Important :</strong> rien de ce que vous ajoutez n'est enregistré de façon permanente par l'outil — tout disparaît si vous rafraîchissez ou fermez la page. Pour garder une trace (et nous transmettre les informations), téléchargez le fichier ci-dessous et envoyez-le nous. Le téléchargement ne contient que les chevaux que vous avez vous-même ajoutés dans cette session, pas toute la base.</p>
+    <div class="row-actions" style="margin-top:0;">
+      <button class="btn-secondary" onclick="exportJSON()">⬇ Télécharger mes ajouts</button>
+      <button class="btn-secondary" onclick="document.getElementById('fileInput').click()">↻ Recharger un fichier</button>
+      <input type="file" id="fileInput" accept="application/json" onchange="importJSON(event)">
+    </div>
+  </div>
+
+</div>
+
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOnOverlay(event)">
+  <div class="modal-panel">
+    <div class="modal-head">
+      <h2>Ajouter / tester un cheval</h2>
+      <button type="button" class="modal-close" onclick="closeModal()" aria-label="Fermer">×</button>
+    </div>
+    <p class="hint" style="margin-top:0;">Pedigree sur 3 générations. Chaque case : soit un cheval déjà dans la liste (son ascendance connue est reprise automatiquement, pas besoin de la ressaisir), soit un nouveau cheval à nommer — avec sa lignée d'origine si vous la connaissez. Au-delà de la 3<sup>e</sup> génération, « + Ajouter les ascendants » permet de continuer la lignée aussi loin que vous la connaissez.</p>
+    <div class="tree-wrap"><div class="tree" id="treeContainer"></div></div>
+    <div class="modal-actions">
+      <button class="btn-primary" id="saveTreeBtn" onclick="saveTreeHorse()">Sauvegarder mon cheval</button>
+      <button type="button" class="btn-secondary" onclick="resetTreeForm()">Remise à zéro</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// --- Lignées / souches d'origine (code couleur) ---
+const STRAINS = {
+  sancler:   { label: 'San Cler',     color: 'var(--strain-sancler)' },
+  sd:        { label: 'SD',           color: 'var(--strain-sd)' },
+  cairnview: { label: 'Cairnview',    color: 'var(--strain-cairnview)' },
+  autre:     { label: 'Autre lignée', color: 'var(--strain-autre)' },
+  inconnue:  { label: 'Inconnue',     color: 'var(--strain-inconnue)' }
+};
+
+// --- Données réelles Humming Cob (5 reproducteurs + ascendances documentées) ---
+// id interne stable, jamais le nom -> évite les doublons/homonymes
+// owned:true = cheval Humming Cob (reproducteur/poulain), absent/false = ancêtre de référence
+let horses = [
+  {id:'archy', name:'Cairnview Archy', sex:'stallion', sire:'llewelyn', dam:'kessia', lineage:'Cairnview · Irish Tinker — reproducteur Humming Cob', source:'site hummingcob.fr', strain:'cairnview', owned:true},
+  {id:'llewelyn', name:'Cairnview Llewelyn', sex:'stallion', sire:'mrmorris', dam:'carrigburns', lineage:'Noir Tobiano · Irish Tinker · 2004 · 158cm · ICS', source:'site hummingcob.fr', strain:'cairnview'},
+  {id:'kessia', name:'Cairnview Kessia', sex:'mare', sire:null, dam:null, lineage:'Irish Tinker · ~2004 · Élevage Cairnview', source:'site hummingcob.fr', strain:'cairnview'},
+  {id:'mrmorris', name:'Mr. Morris', sex:'stallion', sire:null, dam:null, lineage:'Noir Pinto · Gypsy Vanner · 1996 · IRL', source:'site hummingcob.fr', strain:'cairnview'},
+  {id:'carrigburns', name:'Carrigburns Lady', sex:'mare', sire:null, dam:null, lineage:'Noir Tobiano · Gypsy Vanner · 1998 · IRL', source:'site hummingcob.fr', strain:'cairnview'},
+
+  {id:'avantgarde', name:'San Cler Avantgarde', sex:'stallion', sire:'talkofthetown', dam:'uptowngirl', lineage:'San Cler · Gypsy Vanner — reproducteur Humming Cob', source:'site hummingcob.fr', strain:'sancler', owned:true},
+  {id:'talkofthetown', name:'San Cler Talk Of The Town', sex:'stallion', sire:'milkybarkid', dam:'orangepop', lineage:'Chestnut HZ Pearl · Gypsy Vanner · 2018 · 14hh', source:'site hummingcob.fr', strain:'sancler'},
+  {id:'uptowngirl', name:'San Cler Uptown Girl', sex:'mare', sire:'razzamataz', dam:'coffeecreme', lineage:'Black HZ Pearl Tobiano · Gypsy Vanner · 2018', source:'site hummingcob.fr', strain:'sancler'},
+  {id:'milkybarkid', name:'The Milky Bar Kid', sex:'stallion', sire:'cremedream', dam:null, lineage:'Gypsy Vanner · 2016', source:'site hummingcob.fr', strain:'sancler'},
+  {id:'cremedream', name:'San Cler Creme Dream', sex:'stallion', sire:'sanclertoby', dam:'foundationmare', lineage:'Tobie · 2009', source:'site hummingcob.fr', strain:'sancler'},
+  {id:'sanclertoby', name:'San Cler Toby', sex:'stallion', sire:null, dam:null, lineage:'Buck tob · 2005 · fondateur San Cler Stud', source:'site hummingcob.fr', strain:'sancler'},
+  {id:'foundationmare', name:'Foundation Mare UK', sex:'mare', sire:null, dam:null, lineage:'Blk tob', source:'site hummingcob.fr', strain:'sancler'},
+  {id:'orangepop', name:'San Cler Orange Pop', sex:'mare', sire:'creamcracker', dam:null, lineage:'Chestnut · Gypsy Vanner · 2014', source:'site hummingcob.fr', strain:'sancler'},
+  {id:'creamcracker', name:'San Cler Cream Cracker', sex:'stallion', sire:'cimlajimboy', dam:'oldpalominomare', lineage:'Pal Pearl Tobiano · 14.1hh · 2010', source:'site hummingcob.fr', strain:'sancler'},
+  {id:'cimlajimboy', name:'Cimla Jimboy', sex:'stallion', sire:'oldjim', dam:'oldpatsancler', lineage:'Black Tobiano Pearl · 2007', source:'site hummingcob.fr', strain:'sancler'},
+  {id:'oldjim', name:'Old Jim', sex:'stallion', sire:null, dam:null, lineage:'Blk tob · 1990', source:'site hummingcob.fr', strain:'sancler'},
+  {id:'oldpatsancler', name:'Old Pat of San Cler', sex:'mare', sire:null, dam:null, lineage:'Buck · 2002', source:'site hummingcob.fr', strain:'sancler'},
+  {id:'oldpalominomare', name:'The Old Palomino Mare (Molly UK)', sex:'mare', sire:null, dam:null, lineage:'1990', source:'site hummingcob.fr', strain:'sancler'},
+  {id:'razzamataz', name:'San Cler Razzamataz', sex:'stallion', sire:'creamcracker', dam:'butterscotch', lineage:'Buckskin Pearl · Gypsy Vanner · 2015', source:'site hummingcob.fr', strain:'sancler'},
+  {id:'butterscotch', name:'San Cler Butterscotch', sex:'mare', sire:'sanclertoby', dam:'nutmeg', lineage:'Buckskin Pearl · 2010', source:'site hummingcob.fr', strain:'sancler'},
+  {id:'nutmeg', name:'San Cler Nutmeg', sex:'mare', sire:null, dam:null, lineage:'Buck pearl · 2007', source:'site hummingcob.fr', strain:'sancler'},
+  {id:'coffeecreme', name:'San Cler Coffee Creme', sex:'mare', sire:'cimlajimboy', dam:'blackshirley', lineage:'Black Pearl Tobiano · Gypsy Vanner · 2010', source:'site hummingcob.fr', strain:'sancler'},
+  {id:'blackshirley', name:'Black Shirley', sex:'mare', sire:null, dam:null, lineage:'San Cler Stud · 2000', source:'site hummingcob.fr', strain:'sancler'},
+
+  {id:'suzie', name:'SD Suzie', sex:'mare', sire:'woollymammoth', dam:'olivia', lineage:'Gypsy Vanner · 2010 — mère de Sakura et Ruby Jane', source:'site hummingcob.fr', strain:'sd', owned:true},
+  {id:'woollymammoth', name:'SD Woolly Mammoth', sex:'stallion', sire:'samsonofwales', dam:'sovereign', lineage:'Black · Gypsy Vanner · 2002 · 13.3hh · GVHS GV04025', source:'site hummingcob.fr', strain:'sd'},
+  {id:'olivia', name:'SD Olivia', sex:'mare', sire:null, dam:null, lineage:'Chestnut · Gypsy Vanner · origines non documentées', source:'site hummingcob.fr', strain:'sd'},
+  {id:'samsonofwales', name:'Samson of Wales', sex:'stallion', sire:'oldhorsewales', dam:'sweepermare', lineage:'Black Tobiano · Gypsy Vanner · ~2000', source:'site hummingcob.fr', strain:'sd'},
+  {id:'oldhorsewales', name:'The Old Horse of Wales', sex:'stallion', sire:null, dam:null, lineage:'Black Tobiano · 15hh · 1984 · IRL', source:'site hummingcob.fr', strain:'sd'},
+  {id:'sweepermare', name:'The Sweeper Mare', sex:'mare', sire:'oldblackbob', dam:'vinesmare', lineage:'Black Tobiano · ~1990', source:'site hummingcob.fr', strain:'sd'},
+  {id:'sovereign', name:'Sovereign', sex:'mare', sire:'bobblagdon', dam:'pricesredwhite', lineage:'Black Tobiano · Gypsy Vanner · 1998 · GVHS GV00053F', source:'site hummingcob.fr', strain:'sd'},
+  {id:'bobblagdon', name:'Bob The Blagdon', sex:'stallion', sire:'lobearedhorse', dam:'horseshoemare', lineage:'Black · 145.5cm · ~1994 · IRL', source:'site hummingcob.fr', strain:'sd'},
+  {id:'pricesredwhite', name:"Price's Red & White Mare", sex:'mare', sire:null, dam:null, lineage:'Bay Tobiano · 1994', source:'site hummingcob.fr', strain:'sd'},
+  {id:'lobearedhorse', name:'The Lob Eared Horse', sex:'stallion', sire:null, dam:null, lineage:'1978', source:'site hummingcob.fr', strain:'sd'},
+  {id:'horseshoemare', name:'The Horseshoe Mare', sex:'mare', sire:null, dam:null, lineage:'', source:'site hummingcob.fr', strain:'sd'},
+  {id:'oldblackbob', name:'Old Black Bob', sex:'stallion', sire:null, dam:null, lineage:'', source:'site hummingcob.fr', strain:'sd'},
+  {id:'vinesmare', name:'A Vines Mare', sex:'mare', sire:null, dam:null, lineage:'', source:'site hummingcob.fr', strain:'sd'},
+
+  {id:'sakura', name:'SD Sakura', sex:'mare', sire:'flashharry', dam:'suzie', lineage:'Gypsy Vanner — reproductrice Humming Cob', source:'site hummingcob.fr', strain:'sd', owned:true},
+  {id:'rubyjane', name:'SD Ruby Jane', sex:'mare', sire:'flashharry', dam:'suzie', lineage:'Gypsy Vanner — reproductrice Humming Cob, pleine sœur de Sakura', source:'site hummingcob.fr', strain:'sd', owned:true},
+  {id:'flashharry', name:'SD Flash Harry', sex:'stallion', sire:'sdjim', dam:'pinkpalomino', lineage:'Bay Sabino · Gypsy Vanner · 2005 · 14hh · GVHS GV13705P', source:'site hummingcob.fr', strain:'sd'},
+  {id:'sdjim', name:'SD Jim (aka Nero)', sex:'stallion', sire:'bobblagdon', dam:'sweepermare', lineage:'Black · Gypsy Vanner · 2003 · 15hh', source:'site hummingcob.fr', strain:'sd'},
+  {id:'pinkpalomino', name:'SD Pink Palomino', sex:'mare', sire:null, dam:null, lineage:'Chestnut · Gypsy Vanner · origines non documentées', source:'site hummingcob.fr', strain:'sd'},
+
+  // --- Étalon extérieur Kuarahy (IFCE infochevaux.ifce.fr) + poulains Humming Cob ---
+  {id:'cairnviewfamous', name:'Cairnview Famous (IRL)', sex:'stallion', sire:null, dam:null, lineage:'IC · 2015 · UELN 372414020161574', source:'infochevaux IFCE', strain:'cairnview'},
+  {id:'gazelle', name:'Gazelle', sex:'mare', sire:null, dam:null, lineage:'ONCS · 2016 · UELN 250001527782570', source:'infochevaux IFCE', strain:'autre'},
+  {id:'kuarahy', name:'Kuarahy OMD', sex:'stallion', sire:'cairnviewfamous', dam:'gazelle', lineage:'Origine Constatée · Café au Lait · 2020 · UELN 25000120252807D', source:'infochevaux IFCE', strain:'cairnview'},
+
+  {id:'nashi', name:'Nashi', sex:'stallion', sire:'archy', dam:'sakura', lineage:'Gypsy Vanner — poulain Humming Cob (Archy x Sakura)', source:'site hummingcob.fr', strain:'inconnue', owned:true},
+  {id:'quercuskaeru', name:'Quercus Kaeru', sex:'stallion', sire:'avantgarde', dam:'suzie', lineage:'Gypsy Vanner — poulain Humming Cob (Avantgarde x Suzie)', source:'site hummingcob.fr', strain:'inconnue', owned:true},
+  {id:'omamori', name:'Omamori', sex:'stallion', sire:'kuarahy', dam:'suzie', lineage:'Gypsy Vanner — poulain Humming Cob (Kuarahy x Suzie)', source:'site hummingcob.fr', strain:'inconnue', owned:true},
+  {id:'orion', name:'Orion', sex:'stallion', sire:'kuarahy', dam:'rubyjane', lineage:'Gypsy Vanner — poulain Humming Cob (Kuarahy x Ruby Jane)', source:'site hummingcob.fr', strain:'inconnue', owned:true}
+];
+
+const horseTable = document.getElementById('horseTable');
+const horseCountEl = document.getElementById('horseCount');
+const treeContainer = document.getElementById('treeContainer');
+const legendEl = document.getElementById('legend');
+
+let idSeq = 1000;
+function nextId(){ return 'h' + (idSeq++); }
+
+function byId(id){ return horses.find(h => h.id === id); }
+function nameOf(id){
+  if(!id) return '—';
+  const h = byId(id);
+  return h ? nameHTML(h) : '?';
+}
+function escapeAttr(s){
+  return (s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// --- Lignée / code couleur ---
+function strainColor(key){ return (STRAINS[key] || STRAINS.inconnue).color; }
+function strainLabel(key){ return (STRAINS[key] || STRAINS.inconnue).label; }
+
+// Un cheval est coloré selon la lignée de ses DEUX parents immédiats (déjà tagués
+// eux-mêmes) : uni si les deux lignées sont identiques (ou un seul parent connu),
+// bicolore (mi-mi) si sire et dam viennent de lignées différentes.
+function strainVisual(h){
+  const sireS = h.sire ? ((byId(h.sire) || {}).strain || 'inconnue') : null;
+  const damS  = h.dam  ? ((byId(h.dam)  || {}).strain || 'inconnue') : null;
+  if(sireS && damS) return { a: sireS, b: damS };
+  if(sireS) return { a: sireS, b: sireS };
+  if(damS) return { a: damS, b: damS };
+  return { a: h.strain || 'inconnue', b: h.strain || 'inconnue' };
+}
+function swatchHTML(h, size){
+  size = size || 16;
+  const v = strainVisual(h);
+  const bg = (v.a === v.b) ? strainColor(v.a) : `linear-gradient(90deg, ${strainColor(v.a)} 50%, ${strainColor(v.b)} 50%)`;
+  const title = (v.a === v.b) ? strainLabel(v.a) : `${strainLabel(v.a)} × ${strainLabel(v.b)}`;
+  return `<span class="swatch" style="width:${size}px;height:${size}px;background:${bg}" title="${title}"></span>`;
+}
+function strainRowLabel(h){
+  const v = strainVisual(h);
+  return (v.a === v.b) ? strainLabel(v.a) : `${strainLabel(v.a)} × ${strainLabel(v.b)}`;
+}
+function renderLegend(){
+  legendEl.innerHTML = `<span class="legend-title">Lignées</span>` +
+    Object.keys(STRAINS).map(key =>
+      `<span class="legend-item"><span class="swatch" style="width:14px;height:14px;background:${strainColor(key)}"></span>${strainLabel(key)}</span>`
+    ).join('');
+}
+
+// --- Couleur par sexe (texte des noms) + fond des cases par lignée ---
+function sexClass(h){ return h.sex === 'mare' ? 'name-mare' : 'name-stallion'; }
+function nameHTML(h){ return `<span class="${sexClass(h)}">${h.name}</span>`; }
+function strainBgFromColors(colorA, colorB){
+  return (colorA === colorB)
+    ? `color-mix(in srgb, ${colorA} 20%, #fffdf9)`
+    : `linear-gradient(90deg, color-mix(in srgb, ${colorA} 20%, #fffdf9) 50%, color-mix(in srgb, ${colorB} 20%, #fffdf9) 50%)`;
+}
+function strainBg(h){
+  const v = strainVisual(h);
+  return strainBgFromColors(strainColor(v.a), strainColor(v.b));
+}
+function strainBgKey(key){
+  return strainBgFromColors(strainColor(key), strainColor(key));
+}
+
+// ==================================================================
+// Case A × case B (page d'accueil) — deux cases strictement symétriques,
+// n'importe quel cheval de la liste dans l'une ou l'autre (voir séance
+// "version-alice&bastien" : contrairement à _4.html, la case de gauche
+// n'est plus restreinte aux chevaux owned:true).
+// ==================================================================
+let testState = { leftId: '', rightId: '' };
+
+// Fonction unique pour les deux cases (side: 'left' ou 'right') — remplace
+// les anciennes renderHcSelect()/renderTestBox() séparées et asymétriques.
+function renderMatchBox(side){
+  const boxEl = document.getElementById(side + 'Box');
+  const contentEl = document.getElementById(side + 'BoxContent');
+  if(!boxEl || !contentEl) return;
+  const id = side === 'left' ? testState.leftId : testState.rightId;
+  const h = id ? byId(id) : null;
+  if(!h){
+    contentEl.className = 'match-box-placeholder';
+    contentEl.innerHTML = 'Cliquez pour choisir ou ajouter un cheval';
+    boxEl.style.background = '';
+    return;
+  }
+  contentEl.className = 'match-box-filled';
+  contentEl.innerHTML = `${swatchHTML(h, 16)}<span class="name ${sexClass(h)}">${h.name}</span><button type="button" class="match-box-change" onclick="event.stopPropagation();openModal('${side}')">Changer</button>`;
+  boxEl.style.background = strainBg(h);
+}
+function updateXResult(){
+  const box = document.getElementById('resultBox');
+  if(!testState.leftId || !testState.rightId){ box.style.display = 'none'; return; }
+  const leftH = byId(testState.leftId), rightH = byId(testState.rightId);
+  if(!leftH || !rightH || leftH.sex === rightH.sex){
+    box.style.display = 'block';
+    document.getElementById('resultValue').textContent = '—';
+    document.getElementById('resultBadge').innerHTML = '';
+    document.getElementById('resultHint').textContent = 'Il faut un étalon et une jument pour calculer une descendance hypothétique.';
+    return;
+  }
+  const sireId = leftH.sex === 'stallion' ? leftH.id : rightH.id;
+  const damId = leftH.sex === 'mare' ? leftH.id : rightH.id;
+  renderMatchResult(sireId, damId);
+}
+function renderMatchResult(sireId, damId){
+  const F = inbreedingCoefficient(sireId, damId);
+  const pct = F * 100;
+
+  const box = document.getElementById('resultBox');
+  const val = document.getElementById('resultValue');
+  const badge = document.getElementById('resultBadge');
+  const hint = document.getElementById('resultHint');
+
+  box.style.display = 'block';
+  val.textContent = pct.toFixed(2) + ' %';
+
+  let color, label, note;
+  if(pct < 3.125){
+    color = 'var(--ok)'; label = 'Faible';
+    note = 'Pas de lien de parenté proche détecté sur les générations connues.';
+  } else if(pct < 6.25){
+    color = 'var(--warn)'; label = 'Modéré (≈ équivalent cousins germains)';
+    note = 'À surveiller, courant sur races à petit cheptel. Vérifier tares connues côté vétérinaire.';
+  } else if(pct < 12.5){
+    color = 'var(--danger)'; label = 'Élevé';
+    note = 'Parenté proche. Accouplement à réserver à un objectif de sélection précis, avec avis vétérinaire.';
+  } else {
+    color = 'var(--danger)'; label = 'Très élevé';
+    note = 'Parenté très proche (type demi-frère/soeur ou plus proche). Déconseillé sauf cas très spécifique encadré.';
+  }
+  badge.innerHTML = `<span class="badge" style="background:${color}">${label}</span>`;
+  const sireH = byId(sireId), damH = byId(damId);
+  const estimNote = (sireH.source === 'estimation' || damH.source === 'estimation')
+    ? ' Attention : au moins un des deux chevaux a une ascendance estimée (intermédiaires non documentés) — ce résultat est une valeur plancher, le risque réel peut être plus élevé.'
+    : '';
+  hint.textContent = note + ' Résultat basé uniquement sur le pedigree connu dans cette liste — fiabilité limitée si des générations manquent.' + estimNote;
+}
+
+// ==================================================================
+// Modale (arbre de pedigree — "Ajouter / tester un cheval")
+// ==================================================================
+// On ne réinitialise le brouillon que s'il est vraiment vide. Ça permet de rouvrir
+// la modale après une fermeture accidentelle (croix, clic hors modale) sans perdre
+// ce qui était déjà rempli — la persistance dure jusqu'à sauvegarde, remise à zéro
+// volontaire, ou rafraîchissement de la page (le brouillon n'est qu'une variable JS).
+function draftHasContent(){
+  if(draft.root.mode === 'existing' && draft.root.existingId) return true;
+  if(draft.root.name.trim()) return true;
+  return Object.keys(draft.nodes).some(k => draft.nodes[k] && draft.nodes[k].mode !== 'empty');
+}
+function openModal(context){
+  // context : 'catalog' (+ Ajouter un cheval, case HC visible, taggé owned par défaut)
+  // | 'left' | 'right' (case A / case B, case HC cachée, arbre poussant vers la gauche
+  // en contexte 'left' — effet miroir, voir renderTree). Contrairement à _4.html, les
+  // deux cases de comparaison sont strictement symétriques : n'importe quel cheval de
+  // la liste peut aller à gauche ou à droite, pas seulement les chevaux owned:true.
+  if(!draftHasContent()){
+    resetDraft();
+    draft.context = context;
+    draft.root.owned = (context === 'catalog');
+  }
+  document.getElementById('modalOverlay').classList.add('open');
+  renderTree();
+}
+function resetTreeForm(){
+  const keepContext = draft.context;
+  resetDraft();
+  draft.context = keepContext;
+  renderTree();
+}
+function closeModal(){
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+function closeModalOnOverlay(e){
+  if(e.target === e.currentTarget) closeModal();
+}
+
+// ==================================================================
+// Arbre de saisie (contenu de la modale)
+// ==================================================================
+// draft.root = infos du cheval qu'on est en train d'ajouter
+// draft.nodes[path] = état de chaque case du pedigree (chemin du type
+// "sire", "dam", "sire.sire", "sire.dam.sire", ...)
+//   mode: 'empty' (inconnu) | 'existing' (cheval de la base) | 'new' (à créer)
+let draft;
+function resetDraft(){
+  // root.mode : 'new' (créer un cheval, comportement par défaut) | 'existing' (reprendre
+  // un cheval déjà dans la liste — créé plus tôt dans la session ou importé — via le menu
+  // déroulant affiché sur la carte "Cheval à ajouter" en contexte test, voir renderTree /
+  // onRootExistingSelect). rootShowAll : le menu déroulant est compressé par défaut (ne
+  // liste que les chevaux ajoutés via l'outil) ; passe à true après clic sur "Afficher
+  // tous les chevaux" pour révéler toute la base.
+  draft = { root: { mode:'new', existingId:'', name:'', sex:'stallion', lineage:'', strain:'inconnue', owned:false }, nodes:{}, context:'catalog', rootShowAll:false };
+}
+resetDraft();
+
+function getNode(path){
+  if(!draft.nodes[path]) draft.nodes[path] = { mode:'empty', existingId:'', name:'', lineage:'', strain:'inconnue', expanded:false };
+  return draft.nodes[path];
+}
+function roleOf(path){ const s = path.split('.'); return s[s.length - 1]; } // 'sire' ou 'dam'
+function depthOf(path){ return path.split('.').length; }
+
+function setSlotMode(path, value){
+  clearDescendants(path); // on remplace ce qu'il y a dans la case : tout ce qui était construit dessous n'est plus valable
+  const node = getNode(path);
+  if(value === ''){
+    node.mode = 'empty'; node.existingId = ''; node.expanded = false;
+  } else if(value === '__new__'){
+    node.mode = 'new'; node.existingId = ''; node.expanded = false;
+  } else {
+    node.mode = 'existing'; node.existingId = value; node.expanded = false;
+    cascadeExisting(path, value, depthOf(path));
+  }
+  renderTree();
+}
+
+// Si on enlève ou change le cheval d'une case, tout ce qui avait été rempli
+// dessous (ascendants automatiques ou saisis à la main) disparaît avec lui.
+function clearDescendants(path){
+  const sirePath = path + '.sire', damPath = path + '.dam';
+  if(draft.nodes[sirePath]){ clearDescendants(sirePath); delete draft.nodes[sirePath]; }
+  if(draft.nodes[damPath]){ clearDescendants(damPath); delete draft.nodes[damPath]; }
+}
+
+// Quand on choisit un cheval déjà en base, on reprend automatiquement SES parents
+// connus dans les cases ascendant correspondantes — mais seulement dans la grille
+// statique des 3 générations (14 cases). Au-delà, ça sature l'écran : étendre la
+// lignée redevient une action volontaire via "+ Ajouter les ascendants".
+function cascadeExisting(path, horseId, treeDepth){
+  if(treeDepth >= 3) return; // hors de la grille statique : on n'auto-remplit plus
+  fillOneLevel(path, horseId);
+  const sireNode = draft.nodes[path + '.sire'];
+  if(sireNode && sireNode.mode === 'existing') cascadeExisting(path + '.sire', sireNode.existingId, treeDepth + 1);
+  const damNode = draft.nodes[path + '.dam'];
+  if(damNode && damNode.mode === 'existing') cascadeExisting(path + '.dam', damNode.existingId, treeDepth + 1);
+}
+
+// Remplit uniquement le niveau juste en dessous de `path` avec les parents connus
+// de `horseId` (sans aller plus loin) — utilisé pour le remplissage initial et pour
+// le bouton "+ Ajouter les ascendants" quand on l'utilise sur un cheval de la base.
+function fillOneLevel(path, horseId){
+  const h = byId(horseId);
+  const sirePath = path + '.sire', damPath = path + '.dam';
+  const sireNode = getNode(sirePath);
+  if(h && h.sire){
+    sireNode.mode = 'existing'; sireNode.existingId = h.sire; sireNode.expanded = false;
+  } else {
+    sireNode.mode = 'empty'; sireNode.existingId = ''; sireNode.expanded = false;
+  }
+  const damNode = getNode(damPath);
+  if(h && h.dam){
+    damNode.mode = 'existing'; damNode.existingId = h.dam; damNode.expanded = false;
+  } else {
+    damNode.mode = 'empty'; damNode.existingId = ''; damNode.expanded = false;
+  }
+}
+function updateDraftField(path, field, value){
+  getNode(path)[field] = value; // pas de re-render : on garde le focus du champ
+}
+function updateRootField(field, value){
+  draft.root[field] = value;
+}
+function setNodeStrain(path, key){
+  getNode(path).strain = key;
+  renderTree();
+}
+function setRootStrain(key){
+  draft.root.strain = key;
+  renderTree();
+}
+function expandNode(path){
+  const node = getNode(path);
+  node.expanded = true;
+  if(node.mode === 'existing' && node.existingId){
+    // On révèle une génération de plus, remplie avec les vrais parents connus si la base les documente.
+    clearDescendants(path);
+    fillOneLevel(path, node.existingId);
+  }
+  renderTree();
+}
+
+function strainPickerHTML(currentKey, onClickExpr){
+  return `<div class="strain-caption">Lignée d'origine</div><div class="strain-picker">` +
+    Object.keys(STRAINS).map(key =>
+      `<button type="button" class="swatch-btn ${currentKey === key ? 'active' : ''}" style="background:${strainColor(key)}" title="${strainLabel(key)}" onclick="${onClickExpr}('${key}')"></button>`
+    ).join('') + `</div>`;
+}
+
+// --- Recherche/autocomplete d'un cheval existant (remplace l'ancien <select> à plat) ---
+function normalizeSearch(s){
+  return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+function poolForPath(path){
+  const role = roleOf(path);
+  const wantSex = role === 'sire' ? 'stallion' : 'mare';
+  return horses.filter(h => !h.synthetic && h.sex === wantSex);
+}
+function sortedGrouped(list){
+  return [...list].sort((a, b) => {
+    const sa = strainLabel(a.strain), sb = strainLabel(b.strain);
+    return sa !== sb ? sa.localeCompare(sb) : a.name.localeCompare(b.name);
+  });
+}
+function comboListId(path){ return 'combo-' + path.replace(/\./g, '-'); }
+function comboFilter(path, text){
+  const el = document.getElementById(comboListId(path));
+  if(!el) return;
+  const q = normalizeSearch(text);
+  let pool = poolForPath(path);
+  if(q) pool = pool.filter(h => normalizeSearch(h.name).includes(q));
+  pool = sortedGrouped(pool);
+  if(pool.length === 0){
+    el.innerHTML = `<div class="combo-empty">Aucun résultat dans la base.</div>`;
+    el.style.display = 'block';
+    return;
+  }
+  let lastStrain = null, html = '';
+  pool.slice(0, 40).forEach(h => {
+    if(h.strain !== lastStrain){
+      html += `<div class="combo-group">${strainLabel(h.strain)}</div>`;
+      lastStrain = h.strain;
+    }
+    html += `<div class="combo-item" onmousedown="pickCombo('${path}','${h.id}')">${swatchHTML(h, 11)}<span class="${sexClass(h)}">${h.name}</span></div>`;
+  });
+  el.innerHTML = html;
+  el.style.display = 'block';
+}
+function pickCombo(path, horseId){
+  setSlotMode(path, horseId);
+}
+function comboBlur(path){
+  const el = document.getElementById(comboListId(path));
+  setTimeout(() => { if(el) el.style.display = 'none'; }, 150);
+}
+function comboWidgetHTML(path){
+  return `
+    <div class="combo" data-path="${path}">
+      <input type="text" class="combo-input" placeholder="Rechercher un cheval…" autocomplete="off"
+        oninput="comboFilter('${path}', this.value)"
+        onfocus="comboFilter('${path}', this.value)"
+        onblur="comboBlur('${path}')">
+      <div class="combo-list" id="${comboListId(path)}"></div>
+    </div>
+    <button type="button" class="link-btn" onclick="setSlotMode('${path}','__new__')">+ Cheval hors base</button>`;
+}
+
+// --- Reprendre un cheval déjà connu comme racine (contexte test uniquement) ---
+// Menu déroulant plutôt qu'un écran séparé : reste sur la même carte "Cheval à
+// ajouter" comme avant, avec une option en plus. Compressé par défaut (seulement
+// les chevaux ajoutés via l'outil cette session / réimportés) car il est très
+// peu probable qu'on veuille tester un vieux cheval de la base de référence —
+// "Afficher tous les chevaux" permet de sortir de ce filtre au besoin.
+function onRootExistingSelect(value){
+  if(value === ''){
+    draft.root.mode = 'new';
+    draft.root.existingId = '';
+    draft.root.name = '';
+    draft.root.lineage = '';
+    draft.root.strain = 'inconnue';
+    draft.root.sex = 'stallion';
+    clearDescendants('sire'); clearDescendants('dam');
+    delete draft.nodes['sire']; delete draft.nodes['dam'];
+    renderTree();
+    return;
+  }
+  const h = byId(value);
+  if(!h) return;
+  draft.root.mode = 'existing';
+  draft.root.existingId = value;
+  draft.root.name = h.name;
+  draft.root.sex = h.sex;
+  draft.root.lineage = h.lineage || '';
+  draft.root.strain = h.strain || 'inconnue';
+  cascadeRootExisting(value); // ascendance connue reprise automatiquement, sur 3 générations (même logique que pour un ascendant)
+  renderTree();
+}
+function cascadeRootExisting(horseId){
+  clearDescendants('sire'); clearDescendants('dam');
+  const h = byId(horseId);
+  const sireNode = getNode('sire');
+  if(h && h.sire){ sireNode.mode = 'existing'; sireNode.existingId = h.sire; sireNode.expanded = false; cascadeExisting('sire', h.sire, 1); }
+  else { sireNode.mode = 'empty'; sireNode.existingId = ''; sireNode.expanded = false; }
+  const damNode = getNode('dam');
+  if(h && h.dam){ damNode.mode = 'existing'; damNode.existingId = h.dam; damNode.expanded = false; cascadeExisting('dam', h.dam, 1); }
+  else { damNode.mode = 'empty'; damNode.existingId = ''; damNode.expanded = false; }
+}
+function toggleRootShowAll(){
+  draft.rootShowAll = true;
+  renderTree();
+}
+
+function renderBranch(path, depth){
+  const node = getNode(path);
+  const role = roleOf(path);
+  const roleLabel = role === 'sire' ? '♂ Père' : '♀ Mère';
+  const existingHorse = node.mode === 'existing' ? byId(node.existingId) : null;
+
+  let headSwatch = `<span class="swatch" style="width:13px;height:13px;background:${strainColor('inconnue')}"></span>`;
+  if(existingHorse){
+    headSwatch = swatchHTML(existingHorse, 13);
+  } else if(node.mode === 'new'){
+    headSwatch = `<span class="swatch" style="width:13px;height:13px;background:${strainColor(node.strain)}"></span>`;
+  }
+
+  let inner = `<div class="node-head"><span class="left">${roleLabel}${headSwatch}</span><span class="gen-badge">G${depth}</span></div>`;
+
+  if(node.mode === 'existing' && existingHorse){
+    inner += `<div class="slot-pill" style="background:${strainBg(existingHorse)}">${swatchHTML(existingHorse, 12)}<span class="pill-name ${sexClass(existingHorse)}">${existingHorse.name}</span><span class="pill-clear" onclick="setSlotMode('${path}','')" title="Retirer">×</span></div>`;
+    // Ses parents connus sont repris automatiquement dans les cases ascendant, dans
+    // la limite des 3 générations affichées (voir cascadeExisting) — on ne garde
+    // ici qu'une note s'il manque des infos.
+    if(existingHorse.source === 'estimation'){
+      inner += `<div class="node-info">Ascendance estimée (intermédiaires non documentés).</div>`;
+    }
+    if(!(existingHorse.sire || existingHorse.dam)){
+      inner += `<div class="node-info">Origine inconnue en base.</div>`;
+    }
+  } else if(node.mode === 'new'){
+    inner += `<div class="new-caption"><span>Nouveau cheval</span><span class="new-clear" onclick="setSlotMode('${path}','')" title="Annuler">×</span></div>`;
+    inner += `<input placeholder="Nom" value="${escapeAttr(node.name)}" oninput="updateDraftField('${path}','name',this.value)">`;
+    inner += `<input placeholder="Lignée / note" value="${escapeAttr(node.lineage)}" oninput="updateDraftField('${path}','lineage',this.value)">`;
+    inner += strainPickerHTML(node.strain, `setNodeStrain.bind(null,'${path}')`);
+  } else {
+    inner += comboWidgetHTML(path);
+  }
+
+  const hasKnownAncestry = existingHorse && (existingHorse.sire || existingHorse.dam);
+  const showChildren = depth < 3 || node.expanded;
+  const canExpand = depth >= 3 && !node.expanded && (node.mode === 'new' || (node.mode === 'existing' && hasKnownAncestry));
+  if(canExpand){
+    inner += `<button type="button" class="expand-btn" onclick="expandNode('${path}')">+ Ajouter les ascendants</button>`;
+  }
+
+  const cardClass = existingHorse ? 'node-card existing' : 'node-card';
+  let cardBg = '';
+  if(existingHorse){ cardBg = strainBg(existingHorse); }
+  else if(node.mode === 'new'){ cardBg = strainBgKey(node.strain); }
+  const cardStyle = cardBg ? ` style="background:${cardBg}"` : '';
+  let html = `<div class="branch"><div class="${cardClass}"${cardStyle}>${inner}</div>`;
+  if(showChildren){
+    html += `<div class="children-wrap">${renderBranch(path + '.sire', depth + 1)}${renderBranch(path + '.dam', depth + 1)}</div>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+function renderTree(){
+  if(!treeContainer) return;
+  const root = draft.root;
+  // compareMode : cases A/B (comparaison), par opposition au contexte 'catalog'
+  // (+ Ajouter un cheval). Les deux cases de comparaison partagent exactement la
+  // même logique (picker compressé, pas de case "owned") — seule la case 'left'
+  // pousse l'arbre en effet miroir (voir classe .mirrored plus bas).
+  const compareMode = draft.context === 'left' || draft.context === 'right';
+  treeContainer.classList.toggle('mirrored', draft.context === 'left');
+
+  // Référence cassée improbable (id supprimé entre-temps) -> retour au formulaire "nouveau".
+  if(root.mode === 'existing' && !byId(root.existingId)){
+    root.mode = 'new'; root.existingId = '';
+  }
+  const isExisting = compareMode && root.mode === 'existing' && !!root.existingId;
+
+  // --- Menu déroulant "cheval déjà connu" (cases A/B uniquement), sur la même
+  // carte "Cheval à ajouter" — pas d'écran séparé. Compressé par défaut : ne liste
+  // que les chevaux ajoutés via l'outil (créés cette session ou réimportés), plutôt
+  // que toute la base (peu probable qu'on veuille comparer un vieil ancêtre de référence).
+  let existingPicker = '';
+  if(compareMode){
+    const pool = draft.rootShowAll
+      ? horses.filter(h => !h.synthetic)
+      : horses.filter(h => h.source === 'saisie manuelle');
+    const grouped = sortedGrouped(pool);
+    let optionsHTML = '';
+    if(draft.rootShowAll){
+      let lastStrain = null;
+      grouped.forEach(h => {
+        if(h.strain !== lastStrain){
+          if(lastStrain !== null) optionsHTML += `</optgroup>`;
+          optionsHTML += `<optgroup label="${strainLabel(h.strain)}">`;
+          lastStrain = h.strain;
+        }
+        optionsHTML += `<option value="${h.id}" ${root.existingId === h.id ? 'selected' : ''}>${h.name}</option>`;
+      });
+      if(lastStrain !== null) optionsHTML += `</optgroup>`;
+    } else if(grouped.length > 0){
+      optionsHTML = `<optgroup label="Chevaux ajoutés">` +
+        grouped.map(h => `<option value="${h.id}" ${root.existingId === h.id ? 'selected' : ''}>${h.name}</option>`).join('') +
+        `</optgroup>`;
+    }
+    existingPicker = `
+      <select class="root-existing-select" onchange="onRootExistingSelect(this.value)">
+        <option value="">— Nouveau cheval —</option>
+        ${optionsHTML}
+      </select>
+      ${!draft.rootShowAll ? '<button type="button" class="link-btn" onclick="toggleRootShowAll()">Afficher tous les chevaux</button>' : ''}`;
+  }
+
+  const rootSwatch = `<span class="swatch" style="width:13px;height:13px;background:${strainColor(root.strain)}"></span>`;
+  // La case "cheval Humming Cob" ne veut dire quelque chose qu'en contexte catalogue :
+  // les cases A/B servent à comparer n'importe quel cheval de la liste, pas seulement
+  // les nôtres, donc pas de sens à proposer ce tag depuis cette carte-là.
+  const ownedToggle = compareMode ? '' :
+    `<label class="owned-toggle"><input type="checkbox" ${root.owned ? 'checked' : ''} onchange="updateRootField('owned', this.checked)"> Cheval Humming Cob (reproducteur/poulain)</label>`;
+  const disabledAttr = isExisting ? 'disabled' : '';
+  const cardBg = isExisting ? strainBg(byId(root.existingId)) : strainBgKey(root.strain);
+  const infoNote = isExisting ? (() => {
+    const h = byId(root.existingId);
+    if(h.source === 'estimation') return '<div class="node-info">Ascendance estimée (intermédiaires non documentés).</div>';
+    if(!(h.sire || h.dam)) return '<div class="node-info">Origine inconnue en base.</div>';
+    return '<div class="node-info">Ascendance connue reprise automatiquement ci-dessous.</div>';
+  })() : '';
+
+  const rootHTML = `
+    <div class="root-wrap">
+      <div class="node-card root-card" style="background:${cardBg}">
+        <div class="node-head"><span class="left">Cheval à ajouter${rootSwatch}</span></div>
+        ${existingPicker}
+        <select ${disabledAttr} onchange="updateRootField('sex', this.value)">
+          <option value="stallion" ${root.sex === 'stallion' ? 'selected' : ''}>♂ Étalon</option>
+          <option value="mare" ${root.sex === 'mare' ? 'selected' : ''}>♀ Jument</option>
+        </select>
+        <input placeholder="Nom *" ${disabledAttr} value="${escapeAttr(root.name)}" oninput="updateRootField('name', this.value)">
+        <input placeholder="Lignée / note" ${disabledAttr} value="${escapeAttr(root.lineage)}" oninput="updateRootField('lineage', this.value)">
+        ${infoNote}
+        ${ownedToggle}
+      </div>
+      ${!isExisting ? `<div class="root-strain-outside">${strainPickerHTML(root.strain, 'setRootStrain')}</div>` : ''}
+    </div>`;
+  treeContainer.innerHTML = rootHTML +
+    `<div class="children-wrap">${renderBranch('sire', 1)}${renderBranch('dam', 1)}</div>`;
+
+  const saveBtn = document.getElementById('saveTreeBtn');
+  if(saveBtn){
+    saveBtn.textContent = isExisting ? 'Utiliser ce cheval' : 'Sauvegarder mon cheval';
+  }
+}
+
+function saveTreeHorse(){
+  const context = draft.context; // 'catalog' | 'left' | 'right'
+  // Cheval déjà existant repris dans une case de comparaison (A ou B) : pas de
+  // nouvel enregistrement, on réutilise simplement son id.
+  if((context === 'left' || context === 'right') && draft.root.mode === 'existing'){
+    if(!draft.root.existingId){ alert('Choisissez un cheval dans la liste, ou créez-en un nouveau.'); return; }
+    if(context === 'left') testState.leftId = draft.root.existingId;
+    else testState.rightId = draft.root.existingId;
+    closeModal();
+    resetDraft();
+    render();
+    return;
+  }
+
+  const name = draft.root.name.trim();
+  if(!name){ alert('Le nom du cheval est obligatoire.'); return; }
+
+  function resolve(path, depth){
+    const node = draft.nodes[path];
+    if(!node || node.mode === 'empty') return null;
+    if(node.mode === 'existing') return node.existingId || null;
+    // mode 'new'
+    const n = (node.name || '').trim();
+    if(!n) return null;
+    let sireId = null, damId = null;
+    if(depth < 3 || node.expanded){
+      sireId = resolve(path + '.sire', depth + 1);
+      damId = resolve(path + '.dam', depth + 1);
+    }
+    const role = roleOf(path);
+    const id = nextId();
+    horses.push({
+      id, name: n,
+      sex: role === 'sire' ? 'stallion' : 'mare',
+      sire: sireId, dam: damId,
+      lineage: (node.lineage || '').trim(),
+      source: 'saisie manuelle',
+      strain: node.strain || 'inconnue'
+    });
+    return id;
+  }
+
+  const sireId = resolve('sire', 1);
+  const damId = resolve('dam', 1);
+
+  const newHorseId = nextId();
+  horses.push({
+    id: newHorseId,
+    name,
+    sex: draft.root.sex,
+    sire: sireId,
+    dam: damId,
+    lineage: draft.root.lineage.trim(),
+    source: 'saisie manuelle',
+    strain: draft.root.strain || 'inconnue',
+    owned: !!draft.root.owned
+  });
+
+  // Un cheval ajouté depuis une case de comparaison (A ou B) y est placé directement,
+  // pour voir le résultat tout de suite. Ajouté via "+ Ajouter un cheval" (catalogue),
+  // il rejoint juste la liste sans toucher aux cases A/B en cours de comparaison.
+  if(context === 'left') testState.leftId = newHorseId;
+  else if(context === 'right') testState.rightId = newHorseId;
+  closeModal();
+  resetDraft();
+  render();
+}
+
+// ==================================================================
+// Rendu général (tableau, légende, sélecteurs, arbre)
+// ==================================================================
+function horseRowHTML(h){
+  let originTag;
+  if(h.synthetic) originTag = '<span class="tag synth">Maillon estimé</span>';
+  else if(h.source === 'estimation') originTag = '<span class="tag estim">Ascendance estimée</span>';
+  else originTag = '<span class="tag" style="background:var(--ok);">Confirmé</span>';
+  const hcTag = h.owned ? '<span class="tag hc">HC</span>' : '';
+  return `
+    <tr style="background:${strainBg(h)}">
+      <td>${hcTag}${nameHTML(h)}</td>
+      <td><span class="tag sex">${h.sex === 'mare' ? '♀ Jument' : '♂ Étalon'}</span></td>
+      <td>${nameOf(h.sire)}</td>
+      <td>${nameOf(h.dam)}</td>
+      <td style="display:flex;align-items:center;gap:6px;">${swatchHTML(h, 13)}<span>${strainRowLabel(h)}</span></td>
+      <td>${originTag}</td>
+    </tr>`;
+}
+function render(){
+  // Sépare visuellement la base de référence (site hummingcob.fr / infochevaux IFCE)
+  // des chevaux ajoutés via l'outil (saisie manuelle) — utile pour repérer d'un
+  // coup d'œil ce qui vient d'être créé (souvent des essais) plutôt que confirmé.
+  const refHorses = horses.filter(h => h.source !== 'saisie manuelle');
+  const addedHorses = horses.filter(h => h.source === 'saisie manuelle');
+  let rowsHTML = refHorses.map(horseRowHTML).join('');
+  if(addedHorses.length > 0){
+    rowsHTML += `<tr class="section-divider"><td colspan="6"><div class="divider-line"><span>Ajoutés via l'outil (${addedHorses.length})</span></div></td></tr>`;
+    rowsHTML += addedHorses.map(horseRowHTML).join('');
+  }
+  horseTable.innerHTML = rowsHTML;
+  horseCountEl.textContent = horses.length;
+
+  renderMatchBox('left');
+  renderMatchBox('right');
+  updateXResult();
+  renderLegend();
+  renderTree();
+}
+
+// --- Méthode tabulaire de Wright (récursive, mémoïsée) ---
+// IMPORTANT (correctif du 1er juillet 2026, bug de calcul) : on doit toujours étendre
+// l'individu le plus RÉCENT (génération la plus élevée), jamais un ancêtre au hasard
+// sous prétexte qu'il a des parents connus. Si on étend un ancêtre par ses propres
+// parents alors qu'il est déjà parent (ou grand-parent...) de l'autre individu
+// (ancêtres imbriqués), le calcul sous-estime la vraie valeur — vérifié avec une
+// implémentation indépendante (méthode tabulaire itérative) : voir SPEC_1.md.
+function computeGenerations(){
+  const gen = new Map();
+  function genOf(id){
+    if(gen.has(id)) return gen.get(id);
+    const h = byId(id);
+    if(!h || (!h.sire && !h.dam)){ gen.set(id, 0); return 0; }
+    let g = 0;
+    if(h.sire) g = Math.max(g, genOf(h.sire) + 1);
+    if(h.dam) g = Math.max(g, genOf(h.dam) + 1);
+    gen.set(id, g);
+    return g;
+  }
+  horses.forEach(h => genOf(h.id));
+  return gen;
+}
+
+function additiveRelationship(a, b, memo, gen){
+  if(!a || !b) return 0;
+  if(a === b){
+    const h = byId(a);
+    if(!h || (!h.sire && !h.dam)) return 1;
+    return 1 + additiveRelationship(h.sire, h.dam, memo, gen) / 2;
+  }
+  const key = [a,b].sort().join('|');
+  if(memo.has(key)) return memo.get(key);
+
+  // toujours étendre le plus récent des deux (génération la plus élevée) :
+  // étendre un ancêtre casse le calcul quand il est déjà parent de l'autre individu
+  let x = a, y = b;
+  if((gen.get(a) || 0) < (gen.get(b) || 0)){ x = b; y = a; }
+  const hx = byId(x);
+  if(!hx || (!hx.sire && !hx.dam)){
+    memo.set(key, 0); return 0;
+  }
+  const result = 0.5 * (
+    additiveRelationship(hx.sire, y, memo, gen) +
+    additiveRelationship(hx.dam, y, memo, gen)
+  );
+  memo.set(key, result);
+  return result;
+}
+
+function inbreedingCoefficient(sireId, damId){
+  const memo = new Map();
+  const gen = computeGenerations();
+  return additiveRelationship(sireId, damId, memo, gen) / 2;
+}
+
+function exportJSON(){
+  const added = horses.filter(h => h.source === 'saisie manuelle');
+  if(added.length === 0){
+    alert("Vous n'avez encore ajouté aucun cheval dans cette session — rien à télécharger.");
+    return;
+  }
+  const blob = new Blob([JSON.stringify(added, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'mes-chevaux-ajoutes.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importJSON(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if(!Array.isArray(data)) throw new Error('Format invalide');
+      let added = 0, updated = 0;
+      data.forEach(h => {
+        const idx = horses.findIndex(x => x.id === h.id);
+        if(idx >= 0){ horses[idx] = h; updated++; }
+        else { horses.push(h); added++; }
+      });
+      testState = { leftId: '', rightId: '' };
+      resetDraft();
+      render();
+      document.getElementById('resultBox').style.display = 'none';
+      alert(`Import terminé : ${added} cheval(aux) ajouté(s), ${updated} mis à jour.`);
+    } catch(err){
+      alert('Fichier JSON invalide : ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+render();
+</script>
+</body>
+</html>
